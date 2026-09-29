@@ -1,0 +1,1305 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tech Assistência - Gestão & Ordens de Serviço</title>
+  <meta name="description" content="Tech Assistência Técnica: consulta de OS online, gestão administrativa de clientes e ordens de serviço, financeiro e automação via WhatsApp." />
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#eff6ff',
+              100: '#dbeafe',
+              500: '#3b82f6',
+              600: '#2563eb',
+              700: '#1d4ed8',
+              800: '#1e40af',
+              900: '#1e3a8a',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  
+  <!-- Inter Font -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+    }
+    /* Custom scrollbar */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #0f172a;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #334155;
+      border-radius: 3px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #475569;
+    }
+    @media print {
+      body * {
+        visibility: hidden;
+      }
+      #print-modal, #print-modal * {
+        visibility: visible;
+      }
+      #print-modal {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        background: white !important;
+        color: black !important;
+      }
+      .no-print {
+        display: none !important;
+      }
+    }
+  </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col selection:bg-blue-600 selection:text-white">
+
+  <!-- Toast Notification Container -->
+  <div id="toast-container" class="fixed bottom-5 right-5 z-50 flex flex-col gap-3 max-w-sm w-full pointer-events-none"></div>
+
+  <!-- Top Navigation Header -->
+  <header class="sticky top-0 z-40 border-b border-slate-800 bg-slate-900/90 backdrop-blur-md">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex items-center justify-between h-16">
+        
+        <!-- Logo -->
+        <div class="flex items-center gap-3 cursor-pointer" onclick="switchView('client')">
+          <div class="p-2 bg-gradient-to-tr from-blue-600 to-indigo-500 rounded-xl shadow-lg shadow-blue-500/20 text-white">
+            <i data-lucide="wrench" class="w-6 h-6"></i>
+          </div>
+          <div>
+            <span class="text-xl font-bold bg-gradient-to-r from-white via-slate-200 to-blue-400 bg-clip-text text-transparent">TechAssist</span>
+            <span class="text-xs block text-blue-400 font-medium tracking-wide">GESTÃO DE ASSISTÊNCIA</span>
+          </div>
+        </div>
+
+        <!-- Navigation Links -->
+        <nav class="hidden md:flex items-center gap-1 bg-slate-950/60 p-1.5 rounded-full border border-slate-800" id="main-nav">
+          <button onclick="switchView('client')" id="nav-client" class="px-4 py-1.5 rounded-full text-sm font-medium transition-all duration-200 flex items-center gap-2 bg-blue-600 text-white shadow-md shadow-blue-600/30">
+            <i data-lucide="globe" class="w-4 h-4"></i> Portal do Cliente
+          </button>
+          <button onclick="switchView('admin')" id="nav-admin" class="px-4 py-1.5 rounded-full text-sm font-medium text-slate-400 hover:text-slate-200 transition-all duration-200 flex items-center gap-2">
+            <i data-lucide="layout-dashboard" class="w-4 h-4"></i> Painel Admin
+          </button>
+        </nav>
+
+        <!-- Quick Contacts & Switch button -->
+        <div class="flex items-center gap-3">
+          <a href="https://wa.me/5562999998888?text=Olá,%20gostaria%20de%20informações" target="_blank" class="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-lg bg-emerald-600/10 text-emerald-400 border border-emerald-500/20 hover:bg-emerald-600/20 text-xs font-semibold transition-all">
+            <i data-lucide="message-square" class="w-4 h-4"></i> WhatsApp
+          </a>
+
+          <!-- Mobile Nav Toggle View Button -->
+          <button onclick="toggleView()" class="md:hidden p-2 rounded-lg bg-slate-800 text-slate-300 hover:text-white">
+            <i data-lucide="repeat" class="w-5 h-5"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main View Container -->
+  <main class="flex-grow">
+
+    <!-- ========================================== -->
+    <!-- SECTION 1: PUBLIC CLIENT PORTAL VIEW -->
+    <!-- ========================================== -->
+    <div id="view-client" class="space-y-16 pb-16">
+      
+      <!-- Hero Section -->
+      <section class="relative overflow-hidden py-16 lg:py-24 border-b border-slate-800/80 bg-gradient-to-b from-slate-900 via-slate-950 to-slate-950">
+        <!-- Glow Effect -->
+        <div class="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[300px] bg-blue-600/15 blur-[120px] rounded-full pointer-events-none"></div>
+
+        <div class="max-w-5xl mx-auto px-4 text-center relative z-10">
+          <span class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-xs font-semibold uppercase tracking-wider mb-6">
+            <i data-lucide="shield-check" class="w-3.5 h-3.5"></i> Assistência Técnica Especializada
+          </span>
+          <h1 class="text-3xl sm:text-5xl font-extrabold tracking-tight text-white mb-6 leading-tight">
+            Consulte o Status da sua <br class="hidden sm:inline"/> <span class="bg-gradient-to-r from-blue-400 via-indigo-400 to-sky-400 bg-clip-text text-transparent">Ordem de Serviço</span>
+          </h1>
+          <p class="text-slate-400 max-w-2xl mx-auto text-base sm:text-lg mb-8">
+            Acompanhe o conserto do seu dispositivo em tempo real, aprove orçamentos e veja o histórico detalhado do reparo.
+          </p>
+
+          <!-- OS Search Box -->
+          <div class="max-w-xl mx-auto bg-slate-900/90 p-2.5 rounded-2xl border border-slate-700/60 shadow-2xl shadow-blue-900/10 flex flex-col sm:flex-row gap-2">
+            <div class="relative flex-grow">
+              <i data-lucide="search" class="w-5 h-5 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500"></i>
+              <input id="public-os-search-input" type="text" placeholder="Digite o Código da OS (ex: OS-1001) ou CPF" class="w-full bg-slate-950/80 border border-slate-800 text-white rounded-xl pl-11 pr-4 py-3 text-sm focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all">
+            </div>
+            <button onclick="lookupOS()" class="px-6 py-3 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-semibold text-sm shadow-lg shadow-blue-600/25 transition-all flex items-center justify-center gap-2">
+              <i data-lucide="search" class="w-4 h-4"></i> Consultar
+            </button>
+          </div>
+
+          <!-- Quick Test Codes -->
+          <div class="mt-4 flex items-center justify-center gap-2 text-xs text-slate-500">
+            <span>Códigos de teste rápido:</span>
+            <button onclick="quickSearch('OS-1001')" class="underline hover:text-blue-400">OS-1001</button>
+            <span>•</span>
+            <button onclick="quickSearch('OS-1002')" class="underline hover:text-blue-400">OS-1002</button>
+            <span>•</span>
+            <button onclick="quickSearch('OS-1003')" class="underline hover:text-blue-400">OS-1003</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- OS Status Result Display Section -->
+      <section id="os-result-section" class="max-w-4xl mx-auto px-4 hidden">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 sm:p-8 shadow-xl">
+          
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-6 border-b border-slate-800 gap-4">
+            <div>
+              <div class="flex items-center gap-3">
+                <h2 id="res-os-code" class="text-2xl font-bold text-white">OS-1001</h2>
+                <span id="res-os-badge" class="px-3 py-1 rounded-full text-xs font-semibold bg-amber-500/10 text-amber-400 border border-amber-500/20">Em Análise</span>
+              </div>
+              <p id="res-client-name" class="text-slate-400 text-sm mt-1">Cliente: Carlos Eduardo Silva</p>
+            </div>
+            <div class="text-left sm:text-right">
+              <p class="text-xs text-slate-500">Data de Entrada</p>
+              <p id="res-os-date" class="text-sm font-semibold text-slate-300">28/09/2026</p>
+            </div>
+          </div>
+
+          <!-- Progress Stepper -->
+          <div class="py-8">
+            <h3 class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-6">Etapa do Reparo</h3>
+            <div class="relative flex items-center justify-between max-w-2xl mx-auto" id="stepper-container">
+              <!-- Stepper bar generated via JS -->
+            </div>
+          </div>
+
+          <!-- Device & Problem Details Grid -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6 pt-6 border-t border-slate-800">
+            <div class="space-y-3 bg-slate-950/50 p-4 rounded-xl border border-slate-800/80">
+              <h4 class="text-sm font-semibold text-blue-400 flex items-center gap-2">
+                <i data-lucide="smartphone" class="w-4 h-4"></i> Aparelho & Defeito
+              </h4>
+              <p class="text-sm text-slate-300"><strong class="text-slate-400">Dispositivo:</strong> <span id="res-device">iPhone 13 Pro - Apple</span></p>
+              <p class="text-sm text-slate-300"><strong class="text-slate-400">Nº de Série/IMEI:</strong> <span id="res-serial">356982104589211</span></p>
+              <p class="text-sm text-slate-300"><strong class="text-slate-400">Problema Relatado:</strong> <span id="res-problem" class="italic text-slate-400">"Não está ligando e esquenta ao carregar."</span></p>
+            </div>
+
+            <div class="space-y-3 bg-slate-950/50 p-4 rounded-xl border border-slate-800/80">
+              <h4 class="text-sm font-semibold text-blue-400 flex items-center gap-2">
+                <i data-lucide="file-text" class="w-4 h-4"></i> Diagnóstico & Orçamento
+              </h4>
+              <p class="text-sm text-slate-300"><strong class="text-slate-400">Parecer Técnico:</strong> <span id="res-diagnosis">Curto no CI de carga (Hydra/Tristar). Necessária troca do componente.</span></p>
+              
+              <div class="pt-2 border-t border-slate-800/60 flex items-center justify-between">
+                <div>
+                  <p class="text-xs text-slate-400">Valor Total Estimado:</p>
+                  <p id="res-total" class="text-xl font-bold text-emerald-400">R$ 380,00</p>
+                </div>
+                <!-- Action Buttons if Waiting Approval -->
+                <div id="budget-actions" class="flex gap-2">
+                  <button onclick="approveBudget(true)" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-semibold shadow-md transition-all">Aprovar</button>
+                  <button onclick="approveBudget(false)" class="px-3 py-1.5 bg-rose-600/20 text-rose-400 hover:bg-rose-600/30 border border-rose-500/30 rounded-lg text-xs font-semibold transition-all">Recusar</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Direct Tech Chat Link -->
+          <div class="mt-6 flex flex-col sm:flex-row justify-between items-center bg-blue-950/30 border border-blue-900/40 p-4 rounded-xl gap-3">
+            <div class="flex items-center gap-3">
+              <i data-lucide="headphones" class="w-6 h-6 text-blue-400 flex-shrink-0"></i>
+              <span class="text-xs sm:text-sm text-slate-300">Dúvidas sobre o serviço? Fale direto com o técnico responsável.</span>
+            </div>
+            <button onclick="contactTechWhatsApp()" class="w-full sm:w-auto px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold rounded-lg flex items-center justify-center gap-2 shadow-md">
+              <i data-lucide="message-square" class="w-4 h-4"></i> Chamar no WhatsApp
+            </button>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- Request Quote Section -->
+      <section class="max-w-4xl mx-auto px-4">
+        <div class="bg-gradient-to-r from-slate-900 via-slate-900 to-slate-950 border border-slate-800 rounded-2xl p-6 sm:p-10 shadow-xl relative overflow-hidden">
+          <div class="max-w-xl">
+            <span class="text-xs font-semibold text-blue-400 uppercase tracking-wider">Atendimento Rápido</span>
+            <h2 class="text-2xl font-bold text-white mt-1 mb-3">Solicitar Orçamento Prévio</h2>
+            <p class="text-sm text-slate-400 mb-6">Envie os detalhes do seu aparelho e descreva o problema. Nossa equipe entrará em contato via WhatsApp com um pré-diagnóstico.</p>
+          </div>
+
+          <form onsubmit="handlePublicQuoteRequest(event)" class="space-y-4">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label class="block text-xs font-medium text-slate-400 mb-1">Seu Nome</label>
+                <input required type="text" id="req-name" placeholder="Ex: Maria Fernandes" class="w-full bg-slate-950 border border-slate-800 text-white rounded-xl px-3.5 py-2.5 text-sm focus:border-blue-500 focus:outline-none">
+              </div>
+              <div>
+                <label class="block text-xs font-medium text-slate-400 mb-1">WhatsApp / Telefone</label>
+                <input required type="text" id="req-phone" placeholder="(62) 99999-0000" class="w-full bg-slate-950 border border-slate-800 text-white rounded-xl px-3.5 py-2.5 text-sm focus:border-blue-500 focus:outline-none">
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label class="block text-xs font-medium text-slate-400 mb-1">Tipo de Aparelho</label>
+                <select id="req-device-type" class="w-full bg-slate-950 border border-slate-800 text-white rounded-xl px-3.5 py-2.5 text-sm focus:border-blue-500 focus:outline-none">
+                  <option value="Smartphone">Smartphone / Celular</option>
+                  <option value="Notebook">Notebook / Laptop</option>
+                  <option value="Console">Videogame / Console</option>
+                  <option value="Smart TV">Smart TV / Monitor</option>
+                  <option value="Outro">Outro Equipamento</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-xs font-medium text-slate-400 mb-1">Marca & Modelo</label>
+                <input required type="text" id="req-model" placeholder="Ex: Samsung S22, Dell Inspiron..." class="w-full bg-slate-950 border border-slate-800 text-white rounded-xl px-3.5 py-2.5 text-sm focus:border-blue-500 focus:outline-none">
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-xs font-medium text-slate-400 mb-1">Descrição do Defeito</label>
+              <textarea required id="req-desc" rows="3" placeholder="Descreva o que acontece (ex: tela quebrada, não liga, esquentando)..." class="w-full bg-slate-950 border border-slate-800 text-white rounded-xl px-3.5 py-2.5 text-sm focus:border-blue-500 focus:outline-none"></textarea>
+            </div>
+
+            <button type="submit" class="w-full sm:w-auto px-8 py-3 bg-blue-600 hover:bg-blue-500 text-white font-semibold text-sm rounded-xl shadow-lg shadow-blue-600/20 transition-all flex items-center justify-center gap-2">
+              <i data-lucide="send" class="w-4 h-4"></i> Enviar Solicitação
+            </button>
+          </form>
+        </div>
+      </section>
+
+      <!-- Shop Location & Guarantees Footer Info -->
+      <section class="max-w-5xl mx-auto px-4 grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div class="p-5 rounded-2xl bg-slate-900/60 border border-slate-800/80 flex items-start gap-4">
+          <div class="p-3 bg-blue-600/10 text-blue-400 rounded-xl">
+            <i data-lucide="clock" class="w-6 h-6"></i>
+          </div>
+          <div>
+            <h4 class="font-semibold text-white text-sm">Agilidade & Prazo</h4>
+            <p class="text-xs text-slate-400 mt-1">Análise técnica em até 24h e suporte transparente para aprovação de peças.</p>
+          </div>
+        </div>
+
+        <div class="p-5 rounded-2xl bg-slate-900/60 border border-slate-800/80 flex items-start gap-4">
+          <div class="p-3 bg-emerald-600/10 text-emerald-400 rounded-xl">
+            <i data-lucide="shield" class="w-6 h-6"></i>
+          </div>
+          <div>
+            <h4 class="font-semibold text-white text-sm">Garantia de 90 Dias</h4>
+            <p class="text-xs text-slate-400 mt-1">Todos os nossos reparos e peças trocadas possuem garantia legal completa.</p>
+          </div>
+        </div>
+
+        <div class="p-5 rounded-2xl bg-slate-900/60 border border-slate-800/80 flex items-start gap-4">
+          <div class="p-3 bg-indigo-600/10 text-indigo-400 rounded-xl">
+            <i data-lucide="map-pin" class="w-6 h-6"></i>
+          </div>
+          <div>
+            <h4 class="font-semibold text-white text-sm">Loja Física</h4>
+            <p class="text-xs text-slate-400 mt-1">Av. T-63, nº 1020 - Setor Bueno, Goiânia - GO. Seg a Sex 08h às 18h.</p>
+          </div>
+        </div>
+      </section>
+
+    </div>
+
+    <!-- ========================================== -->
+    <!-- SECTION 2: ADMIN MANAGEMENT DASHBOARD -->
+    <!-- ========================================== -->
+    <div id="view-admin" class="hidden max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+      
+      <!-- Top Action Header -->
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-slate-900 p-6 rounded-2xl border border-slate-800 shadow-xl">
+        <div>
+          <h1 class="text-2xl font-bold text-white flex items-center gap-2">
+            <i data-lucide="sliders" class="w-6 h-6 text-blue-500"></i> Gestão de Assistência
+          </h1>
+          <p class="text-sm text-slate-400 mt-0.5">Painel de controle de Ordens de Serviço, Clientes e Financeiro</p>
+        </div>
+        <div class="flex items-center gap-3">
+          <button onclick="openNewOSModal()" class="px-4 py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-sm font-semibold shadow-lg shadow-blue-600/30 transition-all flex items-center gap-2">
+            <i data-lucide="plus-circle" class="w-4 h-4"></i> Nova Ordem de Serviço
+          </button>
+        </div>
+      </div>
+
+      <!-- Dashboard Metric Cards -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <!-- Card 1 -->
+        <div class="p-5 bg-slate-900 border border-slate-800 rounded-2xl flex items-center justify-between">
+          <div>
+            <p class="text-xs font-medium text-slate-400 uppercase tracking-wider">OS Em Aberto</p>
+            <h3 id="dash-active-os" class="text-2xl font-extrabold text-white mt-1">4</h3>
+            <span class="text-xs text-blue-400 mt-1 inline-block">Em andamento na bancada</span>
+          </div>
+          <div class="p-3 bg-blue-500/10 text-blue-400 rounded-2xl">
+            <i data-lucide="wrench" class="w-6 h-6"></i>
+          </div>
+        </div>
+
+        <!-- Card 2 -->
+        <div class="p-5 bg-slate-900 border border-slate-800 rounded-2xl flex items-center justify-between">
+          <div>
+            <p class="text-xs font-medium text-slate-400 uppercase tracking-wider">Aguardando Aprovação</p>
+            <h3 id="dash-pending-os" class="text-2xl font-extrabold text-amber-400 mt-1">2</h3>
+            <span class="text-xs text-slate-400 mt-1 inline-block">Orçamentos pendentes</span>
+          </div>
+          <div class="p-3 bg-amber-500/10 text-amber-400 rounded-2xl">
+            <i data-lucide="clock" class="w-6 h-6"></i>
+          </div>
+        </div>
+
+        <!-- Card 3 -->
+        <div class="p-5 bg-slate-900 border border-slate-800 rounded-2xl flex items-center justify-between">
+          <div>
+            <p class="text-xs font-medium text-slate-400 uppercase tracking-wider">Pronto / Entregues</p>
+            <h3 id="dash-completed-os" class="text-2xl font-extrabold text-emerald-400 mt-1">12</h3>
+            <span class="text-xs text-emerald-400 mt-1 inline-block">Neste mês</span>
+          </div>
+          <div class="p-3 bg-emerald-500/10 text-emerald-400 rounded-2xl">
+            <i data-lucide="check-circle" class="w-6 h-6"></i>
+          </div>
+        </div>
+
+        <!-- Card 4 -->
+        <div class="p-5 bg-slate-900 border border-slate-800 rounded-2xl flex items-center justify-between">
+          <div>
+            <p class="text-xs font-medium text-slate-400 uppercase tracking-wider">Faturamento Mês</p>
+            <h3 id="dash-revenue" class="text-2xl font-extrabold text-white mt-1">R$ 4.850,00</h3>
+            <span class="text-xs text-emerald-400 mt-1 inline-block">+14% vs mês anterior</span>
+          </div>
+          <div class="p-3 bg-indigo-500/10 text-indigo-400 rounded-2xl">
+            <i data-lucide="dollar-sign" class="w-6 h-6"></i>
+          </div>
+        </div>
+      </div>
+
+      <!-- Navigation Tabs for Admin Sections -->
+      <div class="border-b border-slate-800 flex gap-6 text-sm font-medium">
+        <button onclick="switchAdminTab('os-list')" id="tab-os-list" class="pb-3 text-blue-400 border-b-2 border-blue-500 font-semibold flex items-center gap-2">
+          <i data-lucide="list" class="w-4 h-4"></i> Ordens de Serviço
+        </button>
+        <button onclick="switchAdminTab('kanban')" id="tab-kanban" class="pb-3 text-slate-400 hover:text-slate-200 border-b-2 border-transparent flex items-center gap-2">
+          <i data-lucide="kanban" class="w-4 h-4"></i> Visão Kanban
+        </button>
+        <button onclick="switchAdminTab('clients')" id="tab-clients" class="pb-3 text-slate-400 hover:text-slate-200 border-b-2 border-transparent flex items-center gap-2">
+          <i data-lucide="users" class="w-4 h-4"></i> Clientes
+        </button>
+      </div>
+
+      <!-- TAB 1: OS LIST (Table View) -->
+      <div id="admin-sec-os-list" class="space-y-4">
+        
+        <!-- Table Filters -->
+        <div class="flex flex-col sm:flex-row justify-between gap-4">
+          <div class="relative flex-grow max-w-md">
+            <i data-lucide="search" class="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500"></i>
+            <input id="admin-os-search" oninput="renderOSTable()" type="text" placeholder="Buscar por OS, cliente, equipamento..." class="w-full bg-slate-900 border border-slate-800 text-white rounded-xl pl-10 pr-4 py-2 text-sm focus:outline-none focus:border-blue-500">
+          </div>
+          <div class="flex gap-2">
+            <select id="admin-status-filter" onchange="renderOSTable()" class="bg-slate-900 border border-slate-800 text-slate-300 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-blue-500">
+              <option value="ALL">Todos os Status</option>
+              <option value="Recebido">Recebido</option>
+              <option value="Em Análise">Em Análise</option>
+              <option value="Aguardando Peças">Aguardando Peças</option>
+              <option value="Pronto para Retirada">Pronto para Retirada</option>
+              <option value="Entregue">Entregue</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Table Container -->
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-xl">
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-sm">
+              <thead class="bg-slate-950 text-slate-400 text-xs uppercase tracking-wider border-b border-slate-800">
+                <tr>
+                  <th class="p-4">Código / Data</th>
+                  <th class="p-4">Cliente</th>
+                  <th class="p-4">Dispositivo</th>
+                  <th class="p-4">Status</th>
+                  <th class="p-4">Valor Total</th>
+                  <th class="p-4 text-right">Ações</th>
+                </tr>
+              </thead>
+              <tbody id="os-table-body" class="divide-y divide-slate-800/60 text-slate-300">
+                <!-- JS populated -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB 2: KANBAN BOARD VIEW -->
+      <div id="admin-sec-kanban" class="hidden">
+        <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4 overflow-x-auto pb-4">
+          
+          <!-- Column 1 -->
+          <div class="bg-slate-900/80 border border-slate-800/80 rounded-2xl p-4 flex flex-col min-w-[260px]">
+            <div class="flex items-center justify-between mb-4 pb-2 border-b border-slate-800">
+              <span class="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center gap-2">
+                <span class="w-2.5 h-2.5 rounded-full bg-slate-400"></span> Recebido
+              </span>
+              <span id="kb-count-recebido" class="text-xs px-2 py-0.5 rounded-full bg-slate-800 text-slate-400">0</span>
+            </div>
+            <div id="kb-col-Recebido" class="space-y-3 flex-grow min-h-[300px]"></div>
+          </div>
+
+          <!-- Column 2 -->
+          <div class="bg-slate-900/80 border border-slate-800/80 rounded-2xl p-4 flex flex-col min-w-[260px]">
+            <div class="flex items-center justify-between mb-4 pb-2 border-b border-slate-800">
+              <span class="text-xs font-bold text-amber-400 uppercase tracking-wider flex items-center gap-2">
+                <span class="w-2.5 h-2.5 rounded-full bg-amber-400"></span> Em Análise
+              </span>
+              <span id="kb-count-analise" class="text-xs px-2 py-0.5 rounded-full bg-slate-800 text-slate-400">0</span>
+            </div>
+            <div id="kb-col-Em Análise" class="space-y-3 flex-grow min-h-[300px]"></div>
+          </div>
+
+          <!-- Column 3 -->
+          <div class="bg-slate-900/80 border border-slate-800/80 rounded-2xl p-4 flex flex-col min-w-[260px]">
+            <div class="flex items-center justify-between mb-4 pb-2 border-b border-slate-800">
+              <span class="text-xs font-bold text-purple-400 uppercase tracking-wider flex items-center gap-2">
+                <span class="w-2.5 h-2.5 rounded-full bg-purple-400"></span> Aguardando Peças
+              </span>
+              <span id="kb-count-pecas" class="text-xs px-2 py-0.5 rounded-full bg-slate-800 text-slate-400">0</span>
+            </div>
+            <div id="kb-col-Aguardando Peças" class="space-y-3 flex-grow min-h-[300px]"></div>
+          </div>
+
+          <!-- Column 4 -->
+          <div class="bg-slate-900/80 border border-slate-800/80 rounded-2xl p-4 flex flex-col min-w-[260px]">
+            <div class="flex items-center justify-between mb-4 pb-2 border-b border-slate-800">
+              <span class="text-xs font-bold text-emerald-400 uppercase tracking-wider flex items-center gap-2">
+                <span class="w-2.5 h-2.5 rounded-full bg-emerald-400"></span> Pronto para Retirada
+              </span>
+              <span id="kb-count-pronto" class="text-xs px-2 py-0.5 rounded-full bg-slate-800 text-slate-400">0</span>
+            </div>
+            <div id="kb-col-Pronto para Retirada" class="space-y-3 flex-grow min-h-[300px]"></div>
+          </div>
+
+          <!-- Column 5 -->
+          <div class="bg-slate-900/80 border border-slate-800/80 rounded-2xl p-4 flex flex-col min-w-[260px]">
+            <div class="flex items-center justify-between mb-4 pb-2 border-b border-slate-800">
+              <span class="text-xs font-bold text-blue-400 uppercase tracking-wider flex items-center gap-2">
+                <span class="w-2.5 h-2.5 rounded-full bg-blue-400"></span> Entregue
+              </span>
+              <span id="kb-count-entregue" class="text-xs px-2 py-0.5 rounded-full bg-slate-800 text-slate-400">0</span>
+            </div>
+            <div id="kb-col-Entregue" class="space-y-3 flex-grow min-h-[300px]"></div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- TAB 3: CLIENTS MANAGEMENT -->
+      <div id="admin-sec-clients" class="hidden space-y-4">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-xl">
+          <table class="w-full text-left text-sm">
+            <thead class="bg-slate-950 text-slate-400 text-xs uppercase tracking-wider border-b border-slate-800">
+              <tr>
+                <th class="p-4">Nome do Cliente</th>
+                <th class="p-4">Telefone / WhatsApp</th>
+                <th class="p-4">CPF</th>
+                <th class="p-4">Total OS</th>
+                <th class="p-4 text-right">Contato Direct</th>
+              </tr>
+            </thead>
+            <tbody id="clients-table-body" class="divide-y divide-slate-800/60 text-slate-300">
+              <!-- JS Populated -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <!-- MODAL: NEW / EDIT OS -->
+  <div id="modal-os" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl p-6">
+      
+      <div class="flex items-center justify-between pb-4 border-b border-slate-800">
+        <h3 id="modal-os-title" class="text-lg font-bold text-white flex items-center gap-2">
+          <i data-lucide="plus-circle" class="w-5 h-5 text-blue-500"></i> Nova Ordem de Serviço
+        </h3>
+        <button onclick="closeOSModal()" class="text-slate-400 hover:text-white p-1">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <form onsubmit="saveOS(event)" class="space-y-4 mt-4">
+        <input type="hidden" id="form-os-id">
+
+        <!-- Client Info -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div class="sm:col-span-2">
+            <label class="block text-xs font-medium text-slate-400 mb-1">Nome do Cliente *</label>
+            <input required type="text" id="form-client-name" placeholder="Ex: Roberto Alves" class="w-full bg-slate-950 border border-slate-800 text-white rounded-xl px-3 py-2 text-sm focus:border-blue-500 focus:outline-none">
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-slate-400 mb-1">Telefone/WhatsApp *</label>
+            <input required type="text" id="form-client-phone" placeholder="(62) 99888-7777" class="w-full bg-slate-950 border border-slate-800 text-white rounded-xl px-3 py-2 text-sm focus:border-blue-500 focus:outline-none">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-medium text-slate-400 mb-1">CPF do Cliente</label>
+            <input type="text" id="form-client-cpf" placeholder="000.000.000-00" class="w-full bg-slate-950 border border-slate-800 text-white rounded-xl px-3 py-2 text-sm focus:border-blue-500 focus:outline-none">
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-slate-400 mb-1">Tipo de Aparelho</label>
+            <select id="form-device-type" class="w-full bg-slate-950 border border-slate-800 text-white rounded-xl px-3 py-2 text-sm focus:border-blue-500 focus:outline-none">
+              <option value="Smartphone">Smartphone / Celular</option>
+              <option value="Notebook">Notebook / Computador</option>
+              <option value="Console">Console / Videogame</option>
+              <option value="Smart TV">Smart TV</option>
+              <option value="Outro">Outro Equipamento</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Device Info -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-medium text-slate-400 mb-1">Marca & Modelo *</label>
+            <input required type="text" id="form-device-model" placeholder="Ex: PS5 / Samsung Galaxy S21" class="w-full bg-slate-950 border border-slate-800 text-white rounded-xl px-3 py-2 text-sm focus:border-blue-500 focus:outline-none">
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-slate-400 mb-1">Nº de Série / IMEI</label>
+            <input type="text" id="form-device-serial" placeholder="Ex: SN-8899120" class="w-full bg-slate-950 border border-slate-800 text-white rounded-xl px-3 py-2 text-sm focus:border-blue-500 focus:outline-none">
+          </div>
+        </div>
+
+        <!-- Problem & Diagnosis -->
+        <div>
+          <label class="block text-xs font-medium text-slate-400 mb-1">Problema Relatado *</label>
+          <textarea required id="form-problem" rows="2" placeholder="Ex: Aparelho caiu na água e parou de carregar" class="w-full bg-slate-950 border border-slate-800 text-white rounded-xl px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"></textarea>
+        </div>
+
+        <div>
+          <label class="block text-xs font-medium text-slate-400 mb-1">Diagnóstico Técnico Interno</label>
+          <textarea id="form-diagnosis" rows="2" placeholder="Detalhes do teste e solução pretendida..." class="w-full bg-slate-950 border border-slate-800 text-white rounded-xl px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"></textarea>
+        </div>
+
+        <!-- Costs & Status -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div>
+            <label class="block text-xs font-medium text-slate-400 mb-1">Custo de Peças (R$)</label>
+            <input type="number" step="0.01" id="form-cost-parts" value="0.00" oninput="calcTotalCost()" class="w-full bg-slate-950 border border-slate-800 text-white rounded-xl px-3 py-2 text-sm focus:border-blue-500 focus:outline-none">
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-slate-400 mb-1">Mão de Obra (R$)</label>
+            <input type="number" step="0.01" id="form-cost-labor" value="0.00" oninput="calcTotalCost()" class="w-full bg-slate-950 border border-slate-800 text-white rounded-xl px-3 py-2 text-sm focus:border-blue-500 focus:outline-none">
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-slate-400 mb-1">Status da OS</label>
+            <select id="form-status" class="w-full bg-slate-950 border border-slate-800 text-white rounded-xl px-3 py-2 text-sm focus:border-blue-500 focus:outline-none">
+              <option value="Recebido">Recebido</option>
+              <option value="Em Análise">Em Análise</option>
+              <option value="Aguardando Peças">Aguardando Peças</option>
+              <option value="Pronto para Retirada">Pronto para Retirada</option>
+              <option value="Entregue">Entregue</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="p-3 bg-slate-950 rounded-xl border border-slate-800/80 flex items-center justify-between">
+          <span class="text-xs font-medium text-slate-400">Total Previsto:</span>
+          <span id="form-total-preview" class="text-lg font-bold text-emerald-400">R$ 0,00</span>
+        </div>
+
+        <!-- Buttons -->
+        <div class="flex justify-end gap-3 pt-3 border-t border-slate-800">
+          <button type="button" onclick="closeOSModal()" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 text-sm font-semibold rounded-xl">Cancelar</button>
+          <button type="submit" class="px-5 py-2 bg-blue-600 hover:bg-blue-500 text-white text-sm font-semibold rounded-xl shadow-lg shadow-blue-600/30">Salvar Ordem de Serviço</button>
+        </div>
+
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: PRINT RECEIPT / COMPROVANTE DE OS -->
+  <div id="print-modal" class="fixed inset-0 bg-black/80 z-50 flex items-center justify-center hidden p-4">
+    <div class="bg-white text-slate-900 rounded-2xl max-w-xl w-full p-8 shadow-2xl space-y-6 relative">
+      <button onclick="closePrintModal()" class="no-print absolute top-4 right-4 p-2 text-slate-400 hover:text-slate-800">
+        <i data-lucide="x" class="w-6 h-6"></i>
+      </button>
+
+      <!-- Printable Header -->
+      <div class="flex justify-between items-start border-b border-slate-200 pb-4">
+        <div>
+          <h2 class="text-2xl font-bold text-blue-600">Tech Assistência Técnica</h2>
+          <p class="text-xs text-slate-500">Av. T-63, nº 1020 - Setor Bueno, Goiânia - GO</p>
+          <p class="text-xs text-slate-500">Tel / WhatsApp: (62) 99999-8888</p>
+        </div>
+        <div class="text-right">
+          <span class="px-3 py-1 bg-slate-100 text-slate-800 font-bold text-sm rounded border border-slate-300 inline-block" id="prt-code">OS-1001</span>
+          <p id="prt-date" class="text-xs text-slate-500 mt-1">Data: 28/09/2026</p>
+        </div>
+      </div>
+
+      <!-- Printable Details -->
+      <div class="space-y-4 text-xs">
+        <div class="bg-slate-50 p-3 rounded border border-slate-200">
+          <p><strong>Cliente:</strong> <span id="prt-client">Carlos Eduardo</span></p>
+          <p><strong>Telefone:</strong> <span id="prt-phone">(62) 98888-1111</span></p>
+          <p><strong>CPF:</strong> <span id="prt-cpf">123.456.789-00</span></p>
+        </div>
+
+        <div class="bg-slate-50 p-3 rounded border border-slate-200">
+          <p><strong>Aparelho / Modelo:</strong> <span id="prt-device">iPhone 13 Pro</span></p>
+          <p><strong>Nº de Série/IMEI:</strong> <span id="prt-serial">356982104589211</span></p>
+          <p><strong>Defeito Declarado:</strong> <span id="prt-problem">Não liga e esquenta</span></p>
+        </div>
+
+        <div class="border-t border-slate-200 pt-3 flex justify-between items-center">
+          <div>
+            <p class="text-slate-500">Acompanhe seu reparo em nosso site com este código OS.</p>
+            <p class="text-[10px] text-slate-400 mt-0.5">Garantia legal de 90 dias sobre o serviço efetuado.</p>
+          </div>
+          <div class="text-right">
+            <p class="text-xs text-slate-500">Valor Estimado:</p>
+            <p id="prt-total" class="text-lg font-bold text-slate-900">R$ 380,00</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Print Button -->
+      <div class="no-print pt-4 flex gap-3">
+        <button onclick="window.print()" class="flex-grow py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm rounded-xl flex items-center justify-center gap-2 shadow-lg">
+          <i data-lucide="printer" class="w-4 h-4"></i> Imprimir Comprovante
+        </button>
+        <button onclick="closePrintModal()" class="px-5 py-2.5 bg-slate-200 hover:bg-slate-300 text-slate-800 font-semibold text-sm rounded-xl">Fechar</button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Application Logic JavaScript -->
+  <script>
+    // Initial Mock Demo Data
+    let serviceOrders = [
+      {
+        id: 'OS-1001',
+        clientName: 'Carlos Eduardo Silva',
+        clientPhone: '(62) 98888-1111',
+        clientCpf: '123.456.789-00',
+        deviceType: 'Smartphone',
+        deviceModel: 'iPhone 13 Pro',
+        deviceSerial: '356982104589211',
+        problem: 'Não está ligando e esquenta ao carregar.',
+        diagnosis: 'Curto no CI de carga (Hydra/Tristar). Necessária troca do componente.',
+        costParts: 180.00,
+        costLabor: 200.00,
+        total: 380.00,
+        status: 'Em Análise',
+        createdAt: '28/09/2026'
+      },
+      {
+        id: 'OS-1002',
+        clientName: 'Juliana Mendes',
+        clientPhone: '(62) 99111-2222',
+        clientCpf: '987.654.321-11',
+        deviceType: 'Notebook',
+        deviceModel: 'Dell Inspiron 15 3000',
+        deviceSerial: 'BR-DELL-99812',
+        problem: 'Lentidão extrema e tela piscando.',
+        diagnosis: 'HD com setores defeituosos e cabo flat folgado. Recomendado SSD 480GB.',
+        costParts: 250.00,
+        costLabor: 150.00,
+        total: 400.00,
+        status: 'Aguardando Peças',
+        createdAt: '27/09/2026'
+      },
+      {
+        id: 'OS-1003',
+        clientName: 'Lucas Prado',
+        clientPhone: '(62) 98222-3333',
+        clientCpf: '456.789.123-22',
+        deviceType: 'Console',
+        deviceModel: 'PlayStation 5',
+        deviceSerial: 'PS5-9081234',
+        problem: 'Desliga sozinho após 15 minutos de jogo.',
+        diagnosis: 'Acúmulo de poeira nos dissipadores e metal líquido desalinhado. Limpeza e aplicação de novo composto térmico.',
+        costParts: 50.00,
+        costLabor: 250.00,
+        total: 300.00,
+        status: 'Pronto para Retirada',
+        createdAt: '25/09/2026'
+      },
+      {
+        id: 'OS-1004',
+        clientName: 'Fernanda Oliveira',
+        clientPhone: '(62) 99333-4444',
+        clientCpf: '321.654.987-33',
+        deviceType: 'Smart TV',
+        deviceModel: 'Samsung 50" Crystal 4K',
+        deviceSerial: 'SAMS-TV-50-8812',
+        problem: 'Com som, mas sem imagem (tela escura).',
+        diagnosis: 'Barra de LEDs da tela queimada. Troca do Kit de Barras LED completo.',
+        costParts: 220.00,
+        costLabor: 230.00,
+        total: 450.00,
+        status: 'Recebido',
+        createdAt: '29/09/2026'
+      }
+    ];
+
+    // Current Active View State
+    let currentView = 'client';
+
+    // Initialize App
+    window.onload = function() {
+      lucide.createIcons();
+      updateDashboardMetrics();
+      renderOSTable();
+      renderKanban();
+      renderClientsTable();
+    };
+
+    // View Switcher (Client vs Admin)
+    function switchView(view) {
+      currentView = view;
+      const clientSec = document.getElementById('view-client');
+      const adminSec = document.getElementById('view-admin');
+      const navClient = document.getElementById('nav-client');
+      const navAdmin = document.getElementById('nav-admin');
+
+      if (view === 'client') {
+        clientSec.classList.remove('hidden');
+        adminSec.classList.add('hidden');
+        
+        navClient.className = "px-4 py-1.5 rounded-full text-sm font-medium transition-all duration-200 flex items-center gap-2 bg-blue-600 text-white shadow-md shadow-blue-600/30";
+        navAdmin.className = "px-4 py-1.5 rounded-full text-sm font-medium text-slate-400 hover:text-slate-200 transition-all duration-200 flex items-center gap-2";
+      } else {
+        clientSec.classList.add('hidden');
+        adminSec.classList.remove('hidden');
+
+        navAdmin.className = "px-4 py-1.5 rounded-full text-sm font-medium transition-all duration-200 flex items-center gap-2 bg-blue-600 text-white shadow-md shadow-blue-600/30";
+        navClient.className = "px-4 py-1.5 rounded-full text-sm font-medium text-slate-400 hover:text-slate-200 transition-all duration-200 flex items-center gap-2";
+      }
+    }
+
+    function toggleView() {
+      switchView(currentView === 'client' ? 'admin' : 'client');
+    }
+
+    // Admin Tabs Switcher
+    function switchAdminTab(tab) {
+      const tabs = ['os-list', 'kanban', 'clients'];
+      tabs.forEach(t => {
+        document.getElementById(`admin-sec-${t}`).classList.add('hidden');
+        const btn = document.getElementById(`tab-${t}`);
+        btn.className = "pb-3 text-slate-400 hover:text-slate-200 border-b-2 border-transparent flex items-center gap-2";
+      });
+
+      document.getElementById(`admin-sec-${tab}`).classList.remove('hidden');
+      const activeBtn = document.getElementById(`tab-${tab}`);
+      activeBtn.className = "pb-3 text-blue-400 border-b-2 border-blue-500 font-semibold flex items-center gap-2";
+    }
+
+    // Toast Notification System
+    function showToast(message, type = 'info') {
+      const container = document.getElementById('toast-container');
+      const toast = document.createElement('div');
+      
+      const colors = {
+        success: 'bg-emerald-900/90 border-emerald-500 text-emerald-100',
+        error: 'bg-rose-900/90 border-rose-500 text-rose-100',
+        info: 'bg-blue-900/90 border-blue-500 text-blue-100'
+      };
+
+      toast.className = `p-4 rounded-xl border text-xs sm:text-sm font-medium shadow-2xl transition-all duration-300 transform translate-y-2 pointer-events-auto flex items-center justify-between gap-3 ${colors[type] || colors.info}`;
+      toast.innerHTML = `
+        <div class="flex items-center gap-2">
+          <i data-lucide="${type === 'success' ? 'check-circle' : 'info'}" class="w-4 h-4 flex-shrink-0"></i>
+          <span>${message}</span>
+        </div>
+        <button onclick="this.parentElement.remove()" class="text-xs opacity-70 hover:opacity-100">&times;</button>
+      `;
+
+      container.appendChild(toast);
+      lucide.createIcons();
+
+      setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateY(-10px)';
+        setTimeout(() => toast.remove(), 300);
+      }, 4000);
+    }
+
+    // Public OS Lookup
+    function quickSearch(code) {
+      document.getElementById('public-os-search-input').value = code;
+      lookupOS();
+    }
+
+    function lookupOS() {
+      const query = document.getElementById('public-os-search-input').value.trim().toUpperCase();
+      if (!query) {
+        showToast('Digite um código de OS para consultar', 'info');
+        return;
+      }
+
+      const os = serviceOrders.find(o => o.id.toUpperCase() === query || o.clientCpf.replace(/\D/g, '') === query.replace(/\D/g, ''));
+      const resultSec = document.getElementById('os-result-section');
+
+      if (!os) {
+        resultSec.classList.add('hidden');
+        showToast('Nenhuma Ordem de Serviço encontrada com este código ou CPF.', 'error');
+        return;
+      }
+
+      // Populate Result Data
+      document.getElementById('res-os-code').innerText = os.id;
+      document.getElementById('res-client-name').innerText = `Cliente: ${os.clientName}`;
+      document.getElementById('res-os-date').innerText = os.createdAt;
+      document.getElementById('res-device').innerText = `${os.deviceModel} (${os.deviceType})`;
+      document.getElementById('res-serial').innerText = os.deviceSerial || 'N/A';
+      document.getElementById('res-problem').innerText = `"${os.problem}"`;
+      document.getElementById('res-diagnosis').innerText = os.diagnosis || 'Aparelho em fila de testes na bancada.';
+      document.getElementById('res-total').innerText = `R$ ${os.total.toFixed(2)}`;
+
+      // Badge Status Styling
+      const badge = document.getElementById('res-os-badge');
+      badge.innerText = os.status;
+
+      // Stepper Logic
+      renderStepper(os.status);
+
+      resultSec.classList.remove('hidden');
+      resultSec.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      showToast(`Ordem de serviço ${os.id} localizada!`, 'success');
+    }
+
+    // Render Stepper Progress
+    function renderStepper(currentStatus) {
+      const steps = ['Recebido', 'Em Análise', 'Aguardando Peças', 'Pronto para Retirada', 'Entregue'];
+      const currentIndex = steps.indexOf(currentStatus);
+      const container = document.getElementById('stepper-container');
+
+      let html = '';
+      steps.forEach((step, idx) => {
+        const isDone = idx <= currentIndex;
+        const isCurrent = idx === currentIndex;
+
+        html += `
+          <div class="flex flex-col items-center relative z-10">
+            <div class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all ${
+              isCurrent ? 'bg-blue-600 text-white ring-4 ring-blue-500/30' :
+              isDone ? 'bg-emerald-600 text-white' : 'bg-slate-800 text-slate-500 border border-slate-700'
+            }">
+              ${isDone ? '✓' : idx + 1}
+            </div>
+            <span class="text-[10px] sm:text-xs font-medium mt-2 text-center max-w-[70px] ${
+              isCurrent ? 'text-blue-400 font-semibold' : isDone ? 'text-slate-300' : 'text-slate-600'
+            }">${step}</span>
+          </div>
+        `;
+      });
+
+      container.innerHTML = html;
+    }
+
+    // Budget Approval Action
+    function approveBudget(approved) {
+      if (approved) {
+        showToast('Orçamento APROVADO com sucesso! Nossa equipe iniciará o reparo imediatamente.', 'success');
+      } else {
+        showToast('Orçamento RECUSADO. Seu aparelho permanecerá disponível para retirada.', 'info');
+      }
+    }
+
+    // Send WhatsApp Msg to Tech
+    function contactTechWhatsApp() {
+      const osCode = document.getElementById('res-os-code').innerText;
+      const msg = encodeURIComponent(`Olá, gostaria de tirar dúvidas referente à minha Ordem de Serviço: ${osCode}`);
+      window.open(`https://wa.me/5562999998888?text=${msg}`, '_blank');
+    }
+
+    // Public Quote Request
+    function handlePublicQuoteRequest(e) {
+      e.preventDefault();
+      const name = document.getElementById('req-name').value;
+      const phone = document.getElementById('req-phone').value;
+      const device = document.getElementById('req-model').value;
+      const desc = document.getElementById('req-desc').value;
+
+      // Auto create a new OS in 'Recebido'
+      const newId = `OS-${1000 + serviceOrders.length + 1}`;
+      serviceOrders.push({
+        id: newId,
+        clientName: name,
+        clientPhone: phone,
+        clientCpf: 'Pendente',
+        deviceType: document.getElementById('req-device-type').value,
+        deviceModel: device,
+        deviceSerial: 'N/A',
+        problem: desc,
+        diagnosis: 'Solicitação via Portal do Cliente. Aguardando análise.',
+        costParts: 0,
+        costLabor: 0,
+        total: 0,
+        status: 'Recebido',
+        createdAt: new Date().toLocaleDateString('pt-BR')
+      });
+
+      e.target.reset();
+      updateDashboardMetrics();
+      renderOSTable();
+      renderKanban();
+
+      showToast(`Solicitação enviada! Geramos o código ${newId} para acompanhamento.`, 'success');
+    }
+
+    // Admin Dashboard Updates
+    function updateDashboardMetrics() {
+      const active = serviceOrders.filter(o => o.status !== 'Entregue').length;
+      const pending = serviceOrders.filter(o => o.status === 'Em Análise' || o.status === 'Recebido').length;
+      const completed = serviceOrders.filter(o => o.status === 'Pronto para Retirada' || o.status === 'Entregue').length;
+      const revenue = serviceOrders.reduce((sum, o) => sum + o.total, 0);
+
+      document.getElementById('dash-active-os').innerText = active;
+      document.getElementById('dash-pending-os').innerText = pending;
+      document.getElementById('dash-completed-os').innerText = completed;
+      document.getElementById('dash-revenue').innerText = `R$ ${revenue.toFixed(2)}`;
+    }
+
+    // Render OS Table
+    function renderOSTable() {
+      const tbody = document.getElementById('os-table-body');
+      const search = document.getElementById('admin-os-search').value.toLowerCase();
+      const statusFilter = document.getElementById('admin-status-filter').value;
+
+      const filtered = serviceOrders.filter(os => {
+        const matchesSearch = os.id.toLowerCase().includes(search) ||
+                              os.clientName.toLowerCase().includes(search) ||
+                              os.deviceModel.toLowerCase().includes(search);
+        const matchesStatus = statusFilter === 'ALL' || os.status === statusFilter;
+        return matchesSearch && matchesStatus;
+      });
+
+      if (filtered.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="6" class="p-8 text-center text-slate-500">Nenhuma Ordem de Serviço encontrada.</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = filtered.map(os => `
+        <tr class="hover:bg-slate-800/40 transition-all">
+          <td class="p-4">
+            <span class="font-bold text-white block">${os.id}</span>
+            <span class="text-xs text-slate-500">${os.createdAt}</span>
+          </td>
+          <td class="p-4">
+            <span class="font-medium text-slate-200 block">${os.clientName}</span>
+            <span class="text-xs text-slate-400">${os.clientPhone}</span>
+          </td>
+          <td class="p-4">
+            <span class="text-slate-300 block">${os.deviceModel}</span>
+            <span class="text-xs text-slate-500">${os.deviceType}</span>
+          </td>
+          <td class="p-4">
+            <span class="px-2.5 py-1 rounded-full text-xs font-semibold ${getStatusBadgeClass(os.status)}">
+              ${os.status}
+            </span>
+          </td>
+          <td class="p-4 font-bold text-emerald-400">
+            R$ ${os.total.toFixed(2)}
+          </td>
+          <td class="p-4 text-right space-x-2">
+            <button onclick="editOS('${os.id}')" title="Editar OS" class="p-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg">
+              <i data-lucide="edit-3" class="w-4 h-4"></i>
+            </button>
+            <button onclick="openPrintModal('${os.id}')" title="Imprimir Comprovante" class="p-1.5 bg-slate-800 hover:bg-slate-700 text-blue-400 rounded-lg">
+              <i data-lucide="printer" class="w-4 h-4"></i>
+            </button>
+            <button onclick="sendWhatsAppNotify('${os.id}')" title="Notificar via WhatsApp" class="p-1.5 bg-emerald-950 hover:bg-emerald-900 text-emerald-400 rounded-lg border border-emerald-800/50">
+              <i data-lucide="message-square" class="w-4 h-4"></i>
+            </button>
+            <button onclick="deleteOS('${os.id}')" title="Excluir OS" class="p-1.5 bg-slate-800 hover:bg-rose-900 text-rose-400 rounded-lg">
+              <i data-lucide="trash-2" class="w-4 h-4"></i>
+            </button>
+          </td>
+        </tr>
+      `).join('');
+
+      lucide.createIcons();
+    }
+
+    // Helper: Badge Status Colors
+    function getStatusBadgeClass(status) {
+      switch (status) {
+        case 'Recebido': return 'bg-slate-800 text-slate-300 border border-slate-700';
+        case 'Em Análise': return 'bg-amber-500/10 text-amber-400 border border-amber-500/20';
+        case 'Aguardando Peças': return 'bg-purple-500/10 text-purple-400 border border-purple-500/20';
+        case 'Pronto para Retirada': return 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20';
+        case 'Entregue': return 'bg-blue-500/10 text-blue-400 border border-blue-500/20';
+        default: return 'bg-slate-800 text-slate-300';
+      }
+    }
+
+    // Render Kanban Columns
+    function renderKanban() {
+      const columns = ['Recebido', 'Em Análise', 'Aguardando Peças', 'Pronto para Retirada', 'Entregue'];
+      
+      columns.forEach(col => {
+        const colContainer = document.getElementById(`kb-col-${col}`);
+        const items = serviceOrders.filter(o => o.status === col);
+        
+        if (colContainer) {
+          colContainer.innerHTML = items.map(os => `
+            <div class="bg-slate-950 border border-slate-800 p-4 rounded-xl shadow-md space-y-3">
+              <div class="flex justify-between items-start">
+                <span class="text-xs font-bold text-blue-400">${os.id}</span>
+                <span class="text-[10px] text-slate-500">${os.createdAt}</span>
+              </div>
+              <div>
+                <h5 class="text-sm font-semibold text-slate-200">${os.deviceModel}</h5>
+                <p class="text-xs text-slate-400">${os.clientName}</p>
+              </div>
+              <p class="text-xs text-slate-500 line-clamp-2 italic">"${os.problem}"</p>
+              <div class="flex justify-between items-center pt-2 border-t border-slate-900">
+                <span class="text-xs font-bold text-emerald-400">R$ ${os.total.toFixed(2)}</span>
+                <select onchange="updateOSStatus('${os.id}', this.value)" class="bg-slate-900 border border-slate-800 text-[11px] text-slate-300 rounded px-1.5 py-1">
+                  ${columns.map(c => `<option value="${c}" ${c === os.status ? 'selected' : ''}>${c}</option>`).join('')}
+                </select>
+              </div>
+            </div>
+          `).join('');
+        }
+      });
+    }
+
+    // Render Clients Table
+    function renderClientsTable() {
+      const tbody = document.getElementById('clients-table-body');
+      
+      // Group OS by Client Name
+      const clientsMap = {};
+      serviceOrders.forEach(os => {
+        if (!clientsMap[os.clientName]) {
+          clientsMap[os.clientName] = {
+            name: os.clientName,
+            phone: os.clientPhone,
+            cpf: os.clientCpf,
+            totalOS: 1
+          };
+        } else {
+          clientsMap[os.clientName].totalOS += 1;
+        }
+      });
+
+      const clients = Object.values(clientsMap);
+
+      tbody.innerHTML = clients.map(c => `
+        <tr class="hover:bg-slate-800/40">
+          <td class="p-4 font-semibold text-slate-200">${c.name}</td>
+          <td class="p-4 text-slate-400">${c.phone}</td>
+          <td class="p-4 text-slate-400">${c.cpf}</td>
+          <td class="p-4"><span class="px-2 py-0.5 rounded bg-blue-900/40 text-blue-400 text-xs font-bold">${c.totalOS} OS</span></td>
+          <td class="p-4 text-right">
+            <a href="https://wa.me/55${c.phone.replace(/\D/g, '')}" target="_blank" class="px-3 py-1.5 bg-emerald-600/20 text-emerald-400 hover:bg-emerald-600/30 rounded-lg text-xs font-semibold inline-flex items-center gap-1.5">
+              <i data-lucide="message-square" class="w-3.5 h-3.5"></i> WhatsApp
+            </a>
+          </td>
+        </tr>
+      `).join('');
+
+      lucide.createIcons();
+    }
+
+    // Modal Operations
+    function openNewOSModal() {
+      document.getElementById('form-os-id').value = '';
+      document.getElementById('modal-os-title').innerText = 'Nova Ordem de Serviço';
+      document.getElementById('form-client-name').value = '';
+      document.getElementById('form-client-phone').value = '';
+      document.getElementById('form-client-cpf').value = '';
+      document.getElementById('form-device-model').value = '';
+      document.getElementById('form-device-serial').value = '';
+      document.getElementById('form-problem').value = '';
+      document.getElementById('form-diagnosis').value = '';
+      document.getElementById('form-cost-parts').value = '0.00';
+      document.getElementById('form-cost-labor').value = '0.00';
+      calcTotalCost();
+
+      document.getElementById('modal-os').classList.remove('hidden');
+    }
+
+    function editOS(id) {
+      const os = serviceOrders.find(o => o.id === id);
+      if (!os) return;
+
+      document.getElementById('form-os-id').value = os.id;
+      document.getElementById('modal-os-title').innerText = `Editar Ordem de Serviço - ${os.id}`;
+      document.getElementById('form-client-name').value = os.clientName;
+      document.getElementById('form-client-phone').value = os.clientPhone;
+      document.getElementById('form-client-cpf').value = os.clientCpf;
+      document.getElementById('form-device-type').value = os.deviceType;
+      document.getElementById('form-device-model').value = os.deviceModel;
+      document.getElementById('form-device-serial').value = os.deviceSerial;
+      document.getElementById('form-problem').value = os.problem;
+      document.getElementById('form-diagnosis').value = os.diagnosis;
+      document.getElementById('form-cost-parts').value = os.costParts;
+      document.getElementById('form-cost-labor').value = os.costLabor;
+      document.getElementById('form-status').value = os.status;
+
+      calcTotalCost();
+      document.getElementById('modal-os').classList.remove('hidden');
+    }
+
+    function closeOSModal() {
+      document.getElementById('modal-os').classList.add('hidden');
+    }
+
+    function calcTotalCost() {
+      const parts = parseFloat(document.getElementById('form-cost-parts').value) || 0;
+      const labor = parseFloat(document.getElementById('form-cost-labor').value) || 0;
+      const total = parts + labor;
+      document.getElementById('form-total-preview').innerText = `R$ ${total.toFixed(2)}`;
+    }
+
+    function saveOS(e) {
+      e.preventDefault();
+      const id = document.getElementById('form-os-id').value;
+      const parts = parseFloat(document.getElementById('form-cost-parts').value) || 0;
+      const labor = parseFloat(document.getElementById('form-cost-labor').value) || 0;
+
+      if (id) {
+        // Edit existing
+        const index = serviceOrders.findIndex(o => o.id === id);
+        if (index !== -1) {
+          serviceOrders[index] = {
+            ...serviceOrders[index],
+            clientName: document.getElementById('form-client-name').value,
+            clientPhone: document.getElementById('form-client-phone').value,
+            clientCpf: document.getElementById('form-client-cpf').value,
+            deviceType: document.getElementById('form-device-type').value,
+            deviceModel: document.getElementById('form-device-model').value,
+            deviceSerial: document.getElementById('form-device-serial').value,
+            problem: document.getElementById('form-problem').value,
+            diagnosis: document.getElementById('form-diagnosis').value,
+            costParts: parts,
+            costLabor: labor,
+            total: parts + labor,
+            status: document.getElementById('form-status').value
+          };
+          showToast(`OS ${id} atualizada com sucesso!`, 'success');
+        }
+      } else {
+        // Create new
+        const newId = `OS-${1000 + serviceOrders.length + 1}`;
+        serviceOrders.unshift({
+          id: newId,
+          clientName: document.getElementById('form-client-name').value,
+          clientPhone: document.getElementById('form-client-phone').value,
+          clientCpf: document.getElementById('form-client-cpf').value || 'Não informado',
+          deviceType: document.getElementById('form-device-type').value,
+          deviceModel: document.getElementById('form-device-model').value,
+          deviceSerial: document.getElementById('form-device-serial').value || 'N/A',
+          problem: document.getElementById('form-problem').value,
+          diagnosis: document.getElementById('form-diagnosis').value || 'Pendente de análise',
+          costParts: parts,
+          costLabor: labor,
+          total: parts + labor,
+          status: document.getElementById('form-status').value,
+          createdAt: new Date().toLocaleDateString('pt-BR')
+        });
+        showToast(`Nova OS ${newId} criada com sucesso!`, 'success');
+      }
+
+      closeOSModal();
+      updateDashboardMetrics();
+      renderOSTable();
+      renderKanban();
+      renderClientsTable();
+    }
+
+    function updateOSStatus(id, newStatus) {
+      const os = serviceOrders.find(o => o.id === id);
+      if (os) {
+        os.status = newStatus;
+        showToast(`Status da ${id} alterado para "${newStatus}"`, 'info');
+        updateDashboardMetrics();
+        renderOSTable();
+        renderKanban();
+      }
+    }
+
+    function deleteOS(id) {
+      if (confirm(`Tem certeza que deseja excluir a ${id}?`)) {
+        serviceOrders = serviceOrders.filter(o => o.id !== id);
+        showToast(`Ordem de serviço ${id} excluída.`, 'info');
+        updateDashboardMetrics();
+        renderOSTable();
+        renderKanban();
+        renderClientsTable();
+      }
+    }
+
+    // Print Receipt Modal
+    function openPrintModal(id) {
+      const os = serviceOrders.find(o => o.id === id);
+      if (!os) return;
+
+      document.getElementById('prt-code').innerText = os.id;
+      document.getElementById('prt-date').innerText = `Data: ${os.createdAt}`;
+      document.getElementById('prt-client').innerText = os.clientName;
+      document.getElementById('prt-phone').innerText = os.clientPhone;
+      document.getElementById('prt-cpf').innerText = os.clientCpf;
+      document.getElementById('prt-device').innerText = os.deviceModel;
+      document.getElementById('prt-serial').innerText = os.deviceSerial;
+      document.getElementById('prt-problem').innerText = os.problem;
+      document.getElementById('prt-total').innerText = `R$ ${os.total.toFixed(2)}`;
+
+      document.getElementById('print-modal').classList.remove('hidden');
+    }
+
+    function closePrintModal() {
+      document.getElementById('print-modal').classList.add('hidden');
+    }
+
+    // Send WhatsApp Notification to Client
+    function sendWhatsAppNotify(id) {
+      const os = serviceOrders.find(o => o.id === id);
+      if (!os) return;
+
+      const cleanPhone = os.clientPhone.replace(/\D/g, '');
+      const msg = encodeURIComponent(
+        `Olá ${os.clientName}! 👋\n\nAtualização sobre o seu aparelho *${os.deviceModel}* (Código: *${os.id}*):\n\n` +
+        `📌 *Status:* ${os.status}\n` +
+        `💰 *Valor Total:* R$ ${os.total.toFixed(2)}\n\n` +
+        `Acompanhe os detalhes no nosso site!`
+      );
+
+      window.open(`https://wa.me/55${cleanPhone}?text=${msg}`, '_blank');
+      showToast(`Mensagem enviada para o WhatsApp de ${os.clientName}`, 'success');
+    }
+  </script>
+</body>
+</html>
